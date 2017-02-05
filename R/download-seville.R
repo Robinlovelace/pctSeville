@@ -1,3 +1,7 @@
+# # # # # # # # # # # # # #
+# Download from internet  #
+# # # # # # # # # # # # # #
+
 dl_sevilla_official = function() {
   u = "https://www.juntadeandalucia.es/institutodeestadisticaycartografia/DERA/ficheros/G07_Sistema_Urbano.zip"
   if(!file.exists("G07_Sistema_Urbano.zip"))
@@ -19,3 +23,12 @@ tmap_mode("view")
 nrow(grid_sev)
 plot(grid_sev$POBTOTAL)
 qtm(grid_sev)
+
+# # # # # # # # # #
+# From local repo #
+# # # # # # # # # #
+
+old = setwd("pctSeville-data/")
+f = list.files(pattern = ".zip")
+for(i in 1:length(f)) unzip(f[i])
+setwd(old)
