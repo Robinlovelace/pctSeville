@@ -2,7 +2,7 @@
 # Download from internet  #
 # # # # # # # # # # # # # #
 
-dl_sevilla_official = function() {
+dl_city_sev = function() {
   u = "https://www.juntadeandalucia.es/institutodeestadisticaycartografia/DERA/ficheros/G07_Sistema_Urbano.zip"
   if(!file.exists("G07_Sistema_Urbano.zip"))
     download.file(u, "G07_Sistema_Urbano.zip")
@@ -28,7 +28,18 @@ qtm(grid_sev)
 # From local repo #
 # # # # # # # # # #
 
-old = setwd("pctSeville-data/")
-f = list.files(pattern = ".zip")
-for(i in 1:length(f)) unzip(f[i])
-setwd(old)
+load_city_sev = function(data_dir){
+  old = setwd(data_dir)
+  f = list.files(pattern = ".zip")
+  message(paste0("Unzipping these files:", paste(f, collapse = ", ") ))
+  for(i in 1:length(f)) unzip(f[i])
+  f_shape = list.files(pattern = ".shp$")
+  sev_dat = vector(mode = "list", length = length(f_shape))
+  names(sev_dat) = gsub(pattern = ".shp", replacement = "", x = f_shape)
+  for(i in f_shape){
+    message(paste0("Reading", i))
+    sev_dat[[i]] = sf::st_read(i)
+  }
+  setwd(old)
+  sev_dat
+}

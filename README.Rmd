@@ -19,10 +19,10 @@ To reproduce the results presented here, you will need to have a recent version 
 
 ```{r}
 library(tmap)
+library(tmaptools)
 library(stplanr)
 library(rgeos)
 library(raster)
-library(truncnorm)
 ```
 
 

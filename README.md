@@ -4,15 +4,15 @@ This repository stores code for estimating cycling potential in Seville, Spain. 
 
 ``` r
 library(tmap)
+library(tmaptools)
 library(stplanr)
 #> Loading required package: sp
 library(rgeos)
-#> rgeos version: 0.3-21, (SVN revision 540)
-#>  GEOS runtime version: 3.5.0-CAPI-1.9.0 r4084 
-#>  Linking to sp version: 1.2-3 
+#> rgeos version: 0.3-22, (SVN revision 544)
+#>  GEOS runtime version: 3.5.1-CAPI-1.9.1 r4246 
+#>  Linking to sp version: 1.2-4 
 #>  Polygon checking: TRUE
 library(raster)
-library(truncnorm)
 ```
 
 Data input
@@ -38,6 +38,7 @@ The first stage is to identify the extent of the city:
 region_bb = bb("Seville")
 region_poly = bb2poly(region_bb)
 osm_tiles = read_osm(region_bb)
+#> Warning: Current projection unknown. Long lat coordinates (wgs84) assumed.
 qtm(osm_tiles)
 ```
 
