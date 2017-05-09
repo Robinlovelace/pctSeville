@@ -1,4 +1,4 @@
-Package: pctSevilla
+Package: pctSeville
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
@@ -13,3 +13,6 @@ Imports: stplanr,
     tmap,
     sp,
     sf
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

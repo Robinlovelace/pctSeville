@@ -1,0 +1,31 @@
+---
+title: "Exploring cycling potential in Seville with official data"
+author: "Robin Lovelace"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+The Seville data can be loaded as follows, using a function in the **pctSeville** package:
+
+```{r, message=FALSE, results='hide'}
+library(pctSeville)
+sev_dat = load_city_sev(data_dir = "../pctSeville-data/")
+```
+
+The results can be viewed as follow:
+
+```{r}
+sapply(sev_dat, class)
+```
+
+
+```{r}
+library(sf)
+plot(sev_dat$corredores_verdes)
+```
+
+

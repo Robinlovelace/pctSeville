@@ -2,6 +2,7 @@
 # Download from internet  #
 # # # # # # # # # # # # # #
 
+#' @export
 dl_city_sev = function() {
   u = "https://www.juntadeandalucia.es/institutodeestadisticaycartografia/DERA/ficheros/G07_Sistema_Urbano.zip"
   if(!file.exists("G07_Sistema_Urbano.zip"))
@@ -14,20 +15,21 @@ dl_city_sev = function() {
 }
 
 
-grid_pob = raster::shapefile("G07_SistemaUrbano/su08_grid_poblacion_250.shp")
-grid_sev = grid_pob[grid_pob$Municipio == "Sevilla",]
+# grid_pob = raster::shapefile("G07_SistemaUrbano/su08_grid_poblacion_250.shp")
+# grid_sev = grid_pob[grid_pob$Municipio == "Sevilla",]
 
-plot(grid_sev)
-library(tmap)
-tmap_mode("view")
-nrow(grid_sev)
-plot(grid_sev$POBTOTAL)
-qtm(grid_sev)
+# plot(grid_sev)
+# library(tmap)
+# tmap_mode("view")
+# nrow(grid_sev)
+# plot(grid_sev$POBTOTAL)
+# qtm(grid_sev)
 
 # # # # # # # # # #
 # From local repo #
 # # # # # # # # # #
 
+#' @export
 load_city_sev = function(data_dir){
   old = setwd(data_dir)
   f = list.files(pattern = ".zip")
@@ -35,10 +37,11 @@ load_city_sev = function(data_dir){
   for(i in 1:length(f)) unzip(f[i])
   f_shape = list.files(pattern = ".shp$")
   sev_dat = vector(mode = "list", length = length(f_shape))
-  names(sev_dat) = gsub(pattern = ".shp", replacement = "", x = f_shape)
-  for(i in f_shape){
-    message(paste0("Reading", i))
-    sev_dat[[i]] = sf::st_read(i)
+  sev_names = gsub(pattern = ".shp", replacement = "", x = f_shape)
+  names(sev_dat) = sev_names
+  for(i in 1:length(f_shape)){
+    message(paste0("Reading", f_shape[i]))
+    sev_dat[[sev_names[i]]] = sf::st_read(f_shape[i])
   }
   setwd(old)
   sev_dat
