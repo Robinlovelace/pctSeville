@@ -13,19 +13,209 @@ The Seville data can be loaded as follows, using a function in the **pctSeville*
 
 ```{r, message=FALSE, results='hide'}
 library(pctSeville)
-sev_dat = load_city_sev(data_dir = "../pctSeville-data/")
+library(stplanr)
+if(grepl(pattern = "vign", x = getwd())) {
+  indir = "../pctSeville-data/"
+} else {
+  indir = "pctSeville-data/"
+}
+sev_dat = load_city_sev(data_dir = indir)
+library(tidyverse)
+sev_dat$su09_grid_poblacion_amsevilla =
+  rename(sev_dat$su09_grid_poblacion_amsevilla, POBLACION = Pob_Tot)
 ```
 
 The results can be viewed as follow:
 
 ```{r}
-sapply(sev_dat, class)
+sapply(sev_dat, nrow)
 ```
 
 
 ```{r}
 library(sf)
-plot(sev_dat$corredores_verdes)
+plot(sev_dat$corredores_verdes[1])
 ```
+
+## Plot the results
+
+The cycle paths, green corridors and 3000 m buffer are plotted below.
+
+```{r}
+library(tmap)
+tmap_mode("view")
+sev_dat$corredores_verdes = st_zm(sev_dat$corredores_verdes)
+qtm(sev_dat$buffer_3000_definitivo_sin_rodrigo) +
+  qtm(sev_dat$corredores_verdes, lines.col = "green") +
+  qtm(sev_dat$InventarioSevilla) +
+  qtm(sev_dat$MetropolitanasSevilla)
+```
+
+The population and rail data are illustrated below.
+
+```{r}
+qtm(sev_dat$su08_grid_poblacion_amsevilla, fill = "POBLACION") +
+  # qtm(sev_dat$vc01_1_carretera_amsevilla) + # roads
+  # qtm(sev_dat$vc03_ffcc_amsevilla) + # rail links
+  qtm(sev_dat$vc03_ffcc_amsevilla) 
+```
+
+The zones area represented in grey:
+
+```{r}
+sev_dat$todas_zonas$NOM_ARTICU = as.numeric(sev_dat$todas_zonas$NOM_ARTICU)
+sev_dat$todas_zonas = dplyr::arrange(sev_dat$todas_zonas, NOM_ARTICU)
+qtm(sev_dat$todas_zonas) +
+  qtm(sev_dat$su08_grid_poblacion_amsevilla, fill = "POBLACION") +
+  qtm(sev_dat$todas_zonas[c(5, 7, 14),], fill = "red") +
+  tm_scale_bar()
+```
+
+## Propensity to cycle analysis
+
+To explore the propensity to cycle, we will use the example of the Dos Hermanas catchement.
+
+From population to cyling propensity to stations.
+The stations in the study area can be found and plotted as follows:
+
+```{r}
+sel_ex = sev_dat$todas_zonas$NOM_ARTICU == 14
+expo = sev_dat$todas_zonas[sel_ex,]
+expo_buff = st_buffer(expo, dist = 500)
+library(osmdata)
+q = add_feature(opq = opq(bbox = "Andalucia"), key = "railway", value = "station")
+res_osm = osmdata_sf(q)
+stations = res_osm$osm_points
+grep(pattern = "San Juan Alto", stations$name)
+
+# failed attempt to find san juan alto
+# stations_polypoints = st_centroid(res_osm$osm_polygons)
+# num_nas = sapply(stations, function(x) sum(is.na(x)))
+# names_keep = names(head(sort(num_nas), n = 4))
+# stations = stations[names_keep]
+# stations_polypoints = stations_polypoints[names_keep]
+# stations = rbind(stations, stations_polypoints)
+
+st_crs(stations)
+stations = st_transform(stations, st_crs(expo))
+plot(stations$geometry)
+plot(expo, add = TRUE)
+stations = stations[expo_buff,]
+stations_buff = st_buffer(stations, dist = 500) %>% st_union()
+```
+
+
+The likely trips to the station can be visualised as follows, for each of the population cells:
+
+```{r}
+pop = sev_dat$su09_grid_poblacion_amsevilla[expo,]
+pop_cents = st_centroid(pop)
+pop_cents = pop_cents[expo,]
+pop_cents = pop_cents %>% filter(!st_within(., stations_buff, sparse = F))
+station = st_centroid(expo)
+grid_num = 3
+l1 = st_linestring(rbind(st_coordinates(stations[1,]), st_coordinates(pop_cents[grid_num,])))
+l1 = st_sf(st_sfc(l1), crs = st_crs(pop))
+# routing
+l1w = as(st_transform(l1, crs = 4326), "Spatial")
+lp = line2df(l1w)
+r = viaroute(lp$fy, lp$fx, lp$ty, lp$tx, profile = "bicyce")
+r = viaroute2sldf(r)
+qtm(expo) +
+  qtm(pop, fill = "POBLACION") +
+  qtm(pop_cents) +
+  qtm(stations, symbols.size = 5) +
+  qtm(l1) +
+  qtm(r, lines.col = "green") +
+  tm_scale_bar()
+```
+
+
+```{r}
+# coefficients of trips
+ck = c(0.556, 0.247, 0.137)
+pop_cents$POBLACION[grid_num] *
+  ck[1] # how many people travel from A to B
+```
+
+<!-- Distance decay. -->
+<!-- We use a simple distance decay model, starting at 1 for zero distance and declining gradually as distance increases: -->
+
+```{r}
+# d = rep(seq(from = 100, to = 3000, by = 100), 3)
+# dd = rep(c(0.0002, 0.0005, 0.001), each = 3000 / 100)
+# pcycle = exp(d * -dd)
+# dd = as.character(dd)
+# # plot(d, pcycle)
+# dd_df = data_frame(`Distance (m)` = d, `Proportion cycling` = pcycle, beta = dd)
+# ggplot(dd_df, aes(`Distance (m)`, `Proportion cycling`, colour = beta)) +
+#   geom_line() +
+#   ylim(c(0, 1))
+# filter(dd_df, `Distance (m)` == 500 | `Distance (m)` == 3000)
+# 0.77880078 / 0.22313016
+```
+
+Now we are in a position to model cycling potential to stations in the case study area for both stations:
+
+```{r}
+# for(grid_num in seq_along(pop_cents$POBLACION)) {
+#   sdist = st_distance(
+#     pop_cents[grid_num,],
+#     stations
+#   )
+#   station = stations[which.min(sdist),]
+#   l1 = st_linestring(rbind(st_coordinates(station), st_coordinates(pop_cents[grid_num,])))
+#   l1 = st_sf(st_sfc(l1), crs = st_crs(pop))
+#   # routing
+#   l1w = as(st_transform(l1, crs = 4326), "Spatial")
+#   lp = line2df(l1w)
+#   r = viaroute(lp$fy, lp$fx, lp$ty, lp$tx, profile = "bicycle")
+#   if(grid_num != 188)
+#     rv = viaroute2sldf(r)
+#   rv$grid_num = grid_num
+#   rv$ncycle = pop_cents$POBLACION[grid_num] *
+#     ck[1] 
+#   if(grid_num == 1) {
+#     r_all = rv
+#   } else {
+#     r_all = sp::rbind.SpatialLinesDataFrame(r_all, rv)
+#   }
+# }
+# saveRDS(r_all, "data/r_all.Rds")
+r_all = readRDS("../data/r_all.Rds")
+ncycle_agg = group_by(r_all@data, grid_num) %>% summarise(ncycle = mean(ncycle))
+plot(r_all$ncycle)
+nrow(ncycle_agg) == nrow(pop_cents)
+pop = pop[pop_cents,]
+pop$Cycling_potential = ncycle_agg$ncycle
+```
+
+Now we can plot the results:
+
+```{r}
+plot(r_all, lwd = r_all$ncycle / mean(r_all$ncycle))
+```
+
+And on an interactive map:
+
+```{r}
+qtm(r_all, lines.lwd = "ncycle", scale = 20) +
+  qtm(stations, scale = 2)
+```
+
+Adding values of overlapping lines:
+
+```{r}
+rnet = overline(r_all, attrib = "ncycle")
+tm_shape(pop) +
+  tm_fill(col = "Cycling_potential", n = 4, breaks = c(0, 10, 100, 1000)) +
+tm_shape(rnet) +
+  tm_lines(lwd = "ncycle", scale = 20) +
+  qtm(stations) +
+  tm_scale_bar()
+# total cycling potential
+sum(pop$Cycling_potential) / sum(pop$POBLACION)
+```
+
 
 
