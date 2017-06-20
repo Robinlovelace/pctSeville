@@ -158,38 +158,55 @@ pop_cents$POBLACION[grid_num] *
 Now we are in a position to model cycling potential to stations in the case study area for both stations:
 
 ```{r}
-for(grid_num in seq_along(pop_cents$POBLACION)) {
-  sdist = st_distance(
-    pop_cents[grid_num,],
-    stations
-  )
-  station = stations[which.min(sdist),]
-  l1 = st_linestring(rbind(st_coordinates(station), st_coordinates(pop_cents[grid_num,])))
-  l1 = st_sf(st_sfc(l1), crs = st_crs(pop))
-  # routing
-  l1w = as(st_transform(l1, crs = 4326), "Spatial")
-  lp = line2df(l1w)
-#   r = viaroute(lp$fy, lp$fx, lp$ty, lp$tx, profile = "bicycle")
-#   if(grid_num != 188)
-#      rv = viaroute2sldf(r)
-  rv = route_graphhopper(from = c(lp$fx, lp$fy), to = c(lp$tx, lp$ty), vehicle = "bike")
-  rv$grid_num = grid_num
-  rv$ncycle = pop_cents$POBLACION[grid_num] *
-    ck[1]
-  if(grid_num == 1) {
-    r_all = rv
-  } else {
-    r_all = sp::rbind.SpatialLinesDataFrame(r_all, rv)
-  }
-}
-saveRDS(r_all, "data/r_all_graph.Rds")
+# pop_cents$station = NA
+# for(grid_num in seq_along(pop_cents$POBLACION)) {
+#   sdist = st_distance(
+#     pop_cents[grid_num,],
+#     stations
+#   )
+#   station = stations[which.min(sdist),]
+#   pop_cents$station[grid_num] = as.character(station$name)
+#   l1 = st_linestring(rbind(st_coordinates(station), st_coordinates(pop_cents[grid_num,])))
+#   l1 = st_sf(st_sfc(l1), crs = st_crs(pop))
+#   # routing
+#   l1w = as(st_transform(l1, crs = 4326), "Spatial")
+#   lp = line2df(l1w)
+# #   r = viaroute(lp$fy, lp$fx, lp$ty, lp$tx, profile = "bicycle")
+# #   if(grid_num != 188)
+# #      rv = viaroute2sldf(r)
+#   rv = route_graphhopper(from = c(lp$fx, lp$fy), to = c(lp$tx, lp$ty), vehicle = "bike")
+#   rv$grid_num = grid_num
+#   rv$ncycle = pop_cents$POBLACION[grid_num] *
+#     ck[1]
+#   if(grid_num == 1) {
+#     r_all = rv
+#   } else {
+#     r_all = sp::rbind.SpatialLinesDataFrame(r_all, rv)
+#   }
+# }
+# saveRDS(r_all, "data/r_all_graph.Rds")
 r_all = readRDS("../data/r_all_graph.Rds")
 ncycle_agg = group_by(r_all@data, grid_num) %>% summarise(ncycle = mean(ncycle))
 plot(r_all$ncycle)
 nrow(ncycle_agg) == nrow(pop_cents)
 pop = pop[pop_cents,]
+pop_cents$station
+pop_cents$Cycling_potential = ncycle_agg$ncycle
+pop_cents = readRDS("../data/pop_cents.Rds")
 pop$Cycling_potential = ncycle_agg$ncycle
 ```
+
+```{r, echo=FALSE}
+# sort the name crap out
+sn = unlist(pop_cents$station)
+snn = as.numeric(sn)
+snnn = levels(stations$name)[snn]
+snnn[is.na(snnn)] = sn[is.na(snnn)]
+pop_cents$station = snnn
+# saveRDS(pop_cents, "data/pop_cents.Rds")
+# find the stations with routes that go outside the study area
+```
+
 
 Now we can plot the results:
 
@@ -207,16 +224,55 @@ qtm(r_all, lines.lwd = "ncycle", scale = 20) +
 Adding values of overlapping lines:
 
 ```{r}
+r_all_orig = r_all
+r_all_sf = st_as_sf(r_all)
+r_all_sf = st_transform(r_all_sf, st_crs(expo))
+r_all = r_all_sf %>% filter(st_within(., expo, sparse = FALSE))
+r_all_out = r_all_sf %>% filter(!st_within(., expo, sparse = FALSE))
+r_all = as(r_all, "Spatial")
+r_all_out = as(r_all_out, "Spatial")
 rnet = overline(r_all, attrib = "ncycle")
+rnet_out = overline(r_all_out, attrib = "ncycle")
+qtm(expo) +
 tm_shape(pop) +
   tm_fill(col = "Cycling_potential", n = 4, breaks = c(0, 10, 100, 1000)) +
 tm_shape(rnet) +
   tm_lines(lwd = "ncycle", scale = 20) +
+  tm_shape(rnet_out) +
+  tm_lines(lwd = "ncycle", scale = 5, col = "blue") +
   qtm(stations) +
+  tm_shape(expo) +
+  tm_borders() +
   tm_scale_bar()
 # total cycling potential
 sum(pop$Cycling_potential) / sum(pop$POBLACION)
 ```
 
+Switch those with overlapping points from San Juan to Expo...
+
+```{r}
+sel = st_within(r_all_sf, expo, sparse = F)
+plot(r_all_sf$geometry[sel])
+plot(expo, add = T)
+plot(r_all_sf$geometry[!sel], add = T, col = "red")
+pop_cents$station[!sel & pop_cents$station == "San Juan Alto"] = "Ciudad Expo"
+```
+
+
+
+Summary results per station:
+
+```{r}
+plot(pop_cents$geometry)
+pop_cents %>% 
+  group_by(station) %>% 
+  summarise(`Cycling potential` = sum(Cycling_potential),
+            Population = sum(POBLACION),
+            N_zones = n()) %>% 
+  st_set_geometry(NULL) %>% 
+  knitr::kable(digits = 0)
+
+readr::write_csv(st_set_geometry(pop_cents, NULL), "/tmp/pop_cells_results.csv")
+```
 
 
