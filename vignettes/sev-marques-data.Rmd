@@ -158,31 +158,32 @@ pop_cents$POBLACION[grid_num] *
 Now we are in a position to model cycling potential to stations in the case study area for both stations:
 
 ```{r}
-# for(grid_num in seq_along(pop_cents$POBLACION)) {
-#   sdist = st_distance(
-#     pop_cents[grid_num,],
-#     stations
-#   )
-#   station = stations[which.min(sdist),]
-#   l1 = st_linestring(rbind(st_coordinates(station), st_coordinates(pop_cents[grid_num,])))
-#   l1 = st_sf(st_sfc(l1), crs = st_crs(pop))
-#   # routing
-#   l1w = as(st_transform(l1, crs = 4326), "Spatial")
-#   lp = line2df(l1w)
+for(grid_num in seq_along(pop_cents$POBLACION)) {
+  sdist = st_distance(
+    pop_cents[grid_num,],
+    stations
+  )
+  station = stations[which.min(sdist),]
+  l1 = st_linestring(rbind(st_coordinates(station), st_coordinates(pop_cents[grid_num,])))
+  l1 = st_sf(st_sfc(l1), crs = st_crs(pop))
+  # routing
+  l1w = as(st_transform(l1, crs = 4326), "Spatial")
+  lp = line2df(l1w)
 #   r = viaroute(lp$fy, lp$fx, lp$ty, lp$tx, profile = "bicycle")
 #   if(grid_num != 188)
-#     rv = viaroute2sldf(r)
-#   rv$grid_num = grid_num
-#   rv$ncycle = pop_cents$POBLACION[grid_num] *
-#     ck[1] 
-#   if(grid_num == 1) {
-#     r_all = rv
-#   } else {
-#     r_all = sp::rbind.SpatialLinesDataFrame(r_all, rv)
-#   }
-# }
-# saveRDS(r_all, "data/r_all.Rds")
-r_all = readRDS("../data/r_all.Rds")
+#      rv = viaroute2sldf(r)
+  rv = route_graphhopper(from = c(lp$fx, lp$fy), to = c(lp$tx, lp$ty), vehicle = "bike")
+  rv$grid_num = grid_num
+  rv$ncycle = pop_cents$POBLACION[grid_num] *
+    ck[1]
+  if(grid_num == 1) {
+    r_all = rv
+  } else {
+    r_all = sp::rbind.SpatialLinesDataFrame(r_all, rv)
+  }
+}
+saveRDS(r_all, "data/r_all_graph.Rds")
+r_all = readRDS("../data/r_all_graph.Rds")
 ncycle_agg = group_by(r_all@data, grid_num) %>% summarise(ncycle = mean(ncycle))
 plot(r_all$ncycle)
 nrow(ncycle_agg) == nrow(pop_cents)
