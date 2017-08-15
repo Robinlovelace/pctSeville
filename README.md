@@ -97,9 +97,7 @@ d = SpatialPointsDataFrame(
 
 We can estimate the 'flow' (T) between origins (`o`) and destinations (`d`) in many ways. The simplest is a simple gravity model, whereby, for each OD pair:
 
-$$
-T = \\frac{mn}{d^2}
-$$
+<p align="center"><img src="https://rawgit.com/in	git@github.com:robinlovelace/pctSeville (fetch/master/svgs/fa44527eff44f2d5ddcf2b147a015718.svg?invert_in_darkmode" align=middle width=106.451895pt height=17.359485pt/></p>
  whereby m and n are some measure of size/attractiveness of `o` and `d` respectively. Implementing this in code, we can calculate all the flows as follows:
 
 ``` r
@@ -118,8 +116,7 @@ head(as.data.frame(table(T_od)))
 #> 5 0.00321665236926721    1
 #> 6 0.00329837072585195    1
 T_odp = as.data.frame.table(T_od)
-T_odp$Var1 = rep(1:nrow(o), times = nrow(d))
-T_odp$Var2 = rep(1:nrow(d), each = nrow(o))
+T_odp<img src="https://rawgit.com/in	git@github.com:robinlovelace/pctSeville (fetch/master/svgs/dc747da85291af56c051b8219a29146a.svg?invert_in_darkmode" align=middle width=339.623295pt height=24.56553pt/>Var2 = rep(1:nrow(d), each = nrow(o))
 names(T_odp) = c("code_o", "code_d", "Flow")
 head(T_odp)
 #>   code_o code_d      Flow
