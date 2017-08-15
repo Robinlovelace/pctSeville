@@ -4,13 +4,15 @@ This repository stores code for estimating cycling potential in Seville, Spain. 
 
 ``` r
 library(tmap)
+tmap_mode("view")
+#> tmap mode set to interactive viewing
 library(tmaptools)
 library(stplanr)
 #> Loading required package: sp
 library(rgeos)
-#> rgeos version: 0.3-22, (SVN revision 544)
+#> rgeos version: 0.3-23, (SVN revision 546)
 #>  GEOS runtime version: 3.5.1-CAPI-1.9.1 r4246 
-#>  Linking to sp version: 1.2-4 
+#>  Linking to sp version: 1.2-5 
 #>  Polygon checking: TRUE
 library(raster)
 ```
@@ -37,9 +39,9 @@ The first stage is to identify the extent of the city:
 ``` r
 region_bb = bb("Seville")
 region_poly = bb2poly(region_bb)
-osm_tiles = read_osm(region_bb)
-#> Warning: Current projection unknown. Long lat coordinates (wgs84) assumed.
-qtm(osm_tiles)
+qtm(region_poly)
+#> Warning: Currect projection of shape region_poly unknown. Long-lat (WGS84)
+#> is assumed.
 ```
 
 ![](figures/README-unnamed-chunk-3-1.png)
@@ -53,8 +55,10 @@ Let's split that region into 100 evenly sized areas, and give each cell a random
 r = raster(ext = extent(region_poly), nrows = 10, ncols = 10)
 set.seed(1)
 values(r) = runif(n = 100, min = 0, max = 100)
-(m = qtm(osm_tiles) +
+(m = qtm(region_poly) +
   tm_shape(r) + tm_raster(alpha = 0.3))
+#> Warning: Currect projection of shape region_poly unknown. Long-lat (WGS84)
+#> is assumed.
 ```
 
 ![](figures/README-unnamed-chunk-4-1.png)
@@ -66,6 +70,8 @@ o = as(r, "SpatialPointsDataFrame")
 o@data = cbind(code_o = 1:nrow(o), o@data)
 m +
   qtm(o)
+#> Warning: Currect projection of shape region_poly unknown. Long-lat (WGS84)
+#> is assumed.
 ```
 
 ![](figures/README-unnamed-chunk-5-1.png)
@@ -76,13 +82,15 @@ Next, let's take 10 destinations at random and allocate attractiveness to them a
 region_centre = gCentroid(region_poly)
 region_cbuf = buff_geo(region_centre, 5000)
 #> Assuming a geographical (lat/lon) CRS (EPSG:4326)
-#> Transforming to CRS +proj=aeqd +lat_0=37.37658075 +lon_0=-5.9260376 +x_0=0 +y_0=0 +ellps=WGS84
-#> Running function on a temporary projected version of the Spatial object using the CRS: +proj=aeqd +lat_0=37.37658075 +lon_0=-5.9260376 +x_0=0 +y_0=0 +ellps=WGS84
+#> Transforming to CRS +proj=aeqd +lat_0=37.37658075 +lon_0=-5.9260377 +x_0=0 +y_0=0 +ellps=WGS84
 d = spsample(region_cbuf, n = 10, type = "random")
 d = SpatialPointsDataFrame(
   d, data.frame(code_d = 1:length(d), w = runif(n = 10, min = 0, max = 100))
   )
 (m = m + qtm(d, symbols.size  = "w"))
+#> Warning: Currect projection of shape region_poly unknown. Long-lat (WGS84)
+#> is assumed.
+#> Legend for symbol sizes not available in view mode.
 ```
 
 ![](figures/README-unnamed-chunk-6-1.png)
@@ -104,11 +112,11 @@ for(i in 1:nrow(o)) {
 head(as.data.frame(table(T_od)))
 #>                  T_od Freq
 #> 1 0.00105349494541377    1
-#> 2 0.00157975938428946    1
-#> 3 0.00249469915289171    1
-#> 4 0.00312605344873716    1
-#> 5  0.0032166523692672    1
-#> 6 0.00329837072585202    1
+#> 2 0.00157975938428947    1
+#> 3  0.0024946991528917    1
+#> 4 0.00312605344873715    1
+#> 5 0.00321665236926721    1
+#> 6 0.00329837072585195    1
 T_odp = as.data.frame.table(T_od)
 T_odp$Var1 = rep(1:nrow(o), times = nrow(d))
 T_odp$Var2 = rep(1:nrow(d), each = nrow(o))
@@ -136,6 +144,10 @@ On the map of Seville, and with width and opacity proportional to flow, this loo
 
 ``` r
 m + tm_shape(l) + tm_lines(lwd = "Flow", scale = 10)
+#> Warning: Currect projection of shape region_poly unknown. Long-lat (WGS84)
+#> is assumed.
+#> Legend for symbol sizes not available in view mode.
+#> Legend for line widths not available in view mode.
 ```
 
 ![](figures/README-unnamed-chunk-9-1.png)
@@ -150,3 +162,6 @@ Adding OSM data
 ---------------
 
 From here we can download information on residential areas...
+
+Official data sources
+---------------------

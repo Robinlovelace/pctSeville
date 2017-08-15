@@ -1,4 +1,4 @@
----
+  ---
 title: "Exploring cycling potential in Seville with official data"
 author: "Robin Lovelace"
 date: "`r Sys.Date()`"
@@ -102,6 +102,8 @@ plot(stations$geometry)
 plot(expo, add = TRUE)
 stations = stations[expo_buff,]
 stations_buff = st_buffer(stations, dist = 500) %>% st_union()
+# saveRDS(stations, "data/stations.Rds")
+# saveRDS(stations_buff, "data/stations_buff.Rds")
 ```
 
 

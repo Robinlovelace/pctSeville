@@ -19,6 +19,7 @@ To reproduce the results presented here, you will need to have a recent version 
 
 ```{r}
 library(tmap)
+tmap_mode("view")
 library(tmaptools)
 library(stplanr)
 library(rgeos)
@@ -49,8 +50,7 @@ The first stage is to identify the extent of the city:
 ```{r}
 region_bb = bb("Seville")
 region_poly = bb2poly(region_bb)
-osm_tiles = read_osm(region_bb)
-qtm(osm_tiles)
+qtm(region_poly)
 ```
 
 ## Randomly generated data
@@ -61,7 +61,7 @@ Let's split that region into 100 evenly sized areas, and give each cell a random
 r = raster(ext = extent(region_poly), nrows = 10, ncols = 10)
 set.seed(1)
 values(r) = runif(n = 100, min = 0, max = 100)
-(m = qtm(osm_tiles) +
+(m = qtm(region_poly) +
   tm_shape(r) + tm_raster(alpha = 0.3))
 ```
 
