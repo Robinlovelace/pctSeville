@@ -1,5 +1,6 @@
 ---
 output: github_document
+title: Estimating cycling potential at the road network level based on areal population data, a case study of Seville
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -22,8 +23,7 @@ library(tmap)
 tmap_mode("view")
 library(tmaptools)
 library(stplanr)
-library(rgeos)
-library(raster)
+library(sf)
 ```
 
 
@@ -58,11 +58,11 @@ qtm(region_poly)
 Let's split that region into 100 evenly sized areas, and give each cell a random value between 1 and 100:
 
 ```{r}
-r = raster(ext = extent(region_poly), nrows = 10, ncols = 10)
+r = raster::raster(ext = raster::extent(region_poly), nrows = 10, ncols = 10)
 set.seed(1)
-values(r) = runif(n = 100, min = 0, max = 100)
+raster::values(r) = runif(n = 100, min = 0, max = 100)
 (m = qtm(region_poly) +
-  tm_shape(r) + tm_raster(alpha = 0.3))
+  tm_shape(r) + tm_raster())
 ```
 
 Now let's convert those residential zones into centroids:
@@ -77,7 +77,7 @@ m +
 Next, let's take 10 destinations at random and allocate attractiveness to them at random:
 
 ```{r}
-region_centre = gCentroid(region_poly)
+region_centre = rgeos::gCentroid(region_poly)
 region_cbuf = buff_geo(region_centre, 5000)
 d = spsample(region_cbuf, n = 10, type = "random")
 d = SpatialPointsDataFrame(
@@ -110,11 +110,10 @@ names(T_odp) = c("code_o", "code_d", "Flow")
 head(T_odp)
 ```
 
-We can visualise this on the map as follows:
+We convert this into spatial lines as follows:
 
 ```{r}
 l = od2line(flow = T_odp, zones = o, destinations = d)
-plot(l)
 ```
 
 On the map of Seville, and with width and opacity proportional to flow, this looks as follows:
@@ -129,14 +128,61 @@ Now we can save this data as an OD matrix:
 write.csv(l@data, "data/od-long-random.csv")
 ```
 
-## Adding OSM data
+## Using real data
 
-From here we can download information on residential areas...
+From here we will use real data.
+We use only data on one area initially, and this is saved in the file `data/stations.geojson` ([the vignettes folder](https://github.com/Robinlovelace/pctSeville/blob/master/vignettes/sev-marques-data.Rmd) contains data to reproduce this data) which we load with help from the **sf** library:
 
-```{r}
-
+```{r, warning=FALSE}
+library(dplyr) # for data analysis
+library(osmdata) # download data from OSM
+q = opq(bbox = c(-6.08, 37.32, -6.03, 37.38)) %>% 
+  add_osm_feature(key = "railway", value = "station")
+stations = osmdata_sf(q)$osm_points
 ```
 
-## Official data sources
+Official data on cycling is saved in the file `data/pop.geojson`, which can be loaded and visualised as follows:
 
+```{r, warning=FALSE}
+pop = read_sf("data/pop.geojson")
+pop_cents = read_sf("data/pop_cents.geojson")
+qtm(pop, "pob_tot1") + 
+  qtm(stations)
+```
+
+The routes between each residential origin and its nearest station destination can be calculated as follows:
+
+```{r}
+pop_cents = filter(pop_cents, pob_tot1 > 100)
+od = data.frame(origin = pop_cents$OBJECTID, destination = NA)
+for(i in 1:nrow(pop_cents)) {
+  for(j in 1:nrow(stations)) {
+    od$destination[i] = as.character(stations$osm_id[which.min(st_distance(stations, pop_cents[i,]))])
+  }
+}
+l = od2line(flow = od, zones = as(pop_cents, "Spatial"), destinations = as(stations, "Spatial"))
+qtm(l)
+```
+
+
+These can be allocated to the transport network as follows:
+
+
+```{r}
+routes = stplanr::line2route(l = l, route_fun = route_graphhopper, vehicle = "bike")
+routes$potential = pop_cents$pob_tot1 * 0.556
+qtm(routes, lines.lwd = "potential", scale = 10, lines.alpha = 0.5)
+```
+
+The final stage is to aggregate the values of overlapping lines:
+
+```{r}
+rnet = overline(routes, "potential")
+tm_shape(pop) +
+  tm_fill(col = "pob_tot1", n = 4, breaks = c(0, 10, 100, 1000)) +
+tm_shape(rnet) +
+  tm_lines(lwd = "potential", scale = 20) +
+  qtm(stations) +
+  tm_scale_bar()
+```
 
