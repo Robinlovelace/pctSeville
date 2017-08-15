@@ -83,7 +83,7 @@ sel_ex = sev_dat$todas_zonas$NOM_ARTICU == 14
 expo = sev_dat$todas_zonas[sel_ex,]
 expo_buff = st_buffer(expo, dist = 500)
 library(osmdata)
-q = add_feature(opq = opq(bbox = "Andalucia"), key = "railway", value = "station")
+q = add_feature(opq = opq(bbox = c(-6.08, 37.32, -6.03, 37.38)), key = "railway", value = "station")
 res_osm = osmdata_sf(q)
 stations = res_osm$osm_points
 grep(pattern = "San Juan Alto", stations$name)
@@ -113,6 +113,8 @@ The likely trips to the station can be visualised as follows, for each of the po
 pop = sev_dat$su09_grid_poblacion_amsevilla[expo,]
 pop_cents = st_centroid(pop)
 pop_cents = pop_cents[expo,]
+# write_sf(st_transform(pop_cents, 4326), "data/pop_cents.geojson") # only run in interactive mode
+# write_sf(st_transform(pop, 4326), "data/pop.geojson") # only run in interactive mode
 pop_cents = pop_cents %>% filter(!st_within(., stations_buff, sparse = F))
 station = st_centroid(expo)
 grid_num = 3
@@ -235,9 +237,10 @@ r_all = as(r_all, "Spatial")
 r_all_out = as(r_all_out, "Spatial")
 rnet = overline(r_all, attrib = "ncycle")
 rnet_out = overline(r_all_out, attrib = "ncycle")
+pop <- rename(pop, Population = pob_tot1)
 qtm(expo) +
 tm_shape(pop) +
-  tm_fill(col = "Cycling_potential", n = 4, breaks = c(0, 10, 100, 1000)) +
+  tm_fill(col = "Population", n = 4, breaks = c(0, 10, 100, 1000)) +
 tm_shape(rnet) +
   tm_lines(lwd = "ncycle", scale = 20) +
   tm_shape(rnet_out) +
@@ -276,5 +279,16 @@ pop_cents %>%
 
 readr::write_csv(st_set_geometry(pop_cents, NULL), "/tmp/pop_cells_results.csv")
 ```
+
+Saving the results
+
+```{r}
+stations2 = st_sf(name = stations$name, geometry = stations$geometry)
+stations2 = st_transform(stations2, 4326)
+# write_sf(stations2, "data/stations.geojson")
+
+# write_sf(expo, "data/expo.geojson")
+```
+
 
 

@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "stations",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "San Juan Alto" }, "geometry": { "type": "Point", "coordinates": [ 230892.487511704792269, 4139328.467221593484282 ] } },
+{ "type": "Feature", "properties": { "name": "Cavaleri" }, "geometry": { "type": "Point", "coordinates": [ 230130.826219334907364, 4138382.528477882035077 ] } },
+{ "type": "Feature", "properties": { "name": "Ciudad Expo" }, "geometry": { "type": "Point", "coordinates": [ 229685.349893017788418, 4137987.955361252650619 ] } }
+]
+}
