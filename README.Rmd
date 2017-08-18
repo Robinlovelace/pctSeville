@@ -48,7 +48,7 @@ Then we will use OSM data because it is smaller and more generalisable to other 
 The first stage is to identify the extent of the city:
 
 ```{r}
-region_bb = bb("Seville")
+region_bb = bb("ciudad expo sevilla", ext = 9)
 region_poly = bb2poly(region_bb)
 qtm(region_poly)
 ```
@@ -136,14 +136,21 @@ We use only data on one area initially, and this is saved in the file `data/stat
 ```{r, warning=FALSE}
 library(dplyr) # for data analysis
 library(osmdata) # download data from OSM
+```
+
+```{r, eval=FALSE}
+# run if online
 q = opq(bbox = c(-6.08, 37.32, -6.03, 37.38)) %>% 
   add_osm_feature(key = "railway", value = "station")
 stations = osmdata_sf(q)$osm_points
+saveRDS(stations, "data/stations.Rds")
 ```
+
 
 Official data on cycling is saved in the file `data/pop.geojson`, which can be loaded and visualised as follows:
 
 ```{r, warning=FALSE}
+stations = readRDS("data/stations.Rds")
 pop = read_sf("data/pop.geojson")
 pop_cents = read_sf("data/pop_cents.geojson")
 qtm(pop, "pob_tot1") + 

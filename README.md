@@ -35,7 +35,7 @@ Study region
 The first stage is to identify the extent of the city:
 
 ``` r
-region_bb = bb("Seville")
+region_bb = bb("ciudad expo sevilla", ext = 9)
 region_poly = bb2poly(region_bb)
 qtm(region_poly)
 #> Warning: Currect projection of shape region_poly unknown. Long-lat (WGS84)
@@ -80,7 +80,7 @@ Next, let's take 10 destinations at random and allocate attractiveness to them a
 region_centre = rgeos::gCentroid(region_poly)
 region_cbuf = buff_geo(region_centre, 5000)
 #> Assuming a geographical (lat/lon) CRS (EPSG:4326)
-#> Transforming to CRS +proj=aeqd +lat_0=37.37658075 +lon_0=-5.9260377 +x_0=0 +y_0=0 +ellps=WGS84
+#> Transforming to CRS +proj=aeqd +lat_0=37.3492614 +lon_0=-6.0516924 +x_0=0 +y_0=0 +ellps=WGS84
 d = spsample(region_cbuf, n = 10, type = "random")
 d = SpatialPointsDataFrame(
   d, data.frame(code_d = 1:length(d), w = runif(n = 10, min = 0, max = 100))
@@ -109,24 +109,24 @@ for(i in 1:nrow(o)) {
 }
 head(as.data.frame(table(T_od)))
 #>                  T_od Freq
-#> 1 0.00105349494541377    1
-#> 2 0.00157975938428947    1
-#> 3  0.0024946991528917    1
-#> 4 0.00312605344873715    1
-#> 5 0.00321665236926721    1
-#> 6 0.00329837072585195    1
+#> 1 0.00119949949224681    1
+#> 2 0.00251646251230312    1
+#> 3 0.00268416056390971    1
+#> 4  0.0036729817710701    1
+#> 5 0.00386501873099056    1
+#> 6 0.00421458316391729    1
 T_odp = as.data.frame.table(T_od)
 T_odp$Var1 = rep(1:nrow(o), times = nrow(d))
 T_odp$Var2 = rep(1:nrow(d), each = nrow(o))
 names(T_odp) = c("code_o", "code_d", "Flow")
 head(T_odp)
 #>   code_o code_d      Flow
-#> 1      1      1 0.1039223
-#> 2      2      1 0.1630297
-#> 3      3      1 0.2806564
-#> 4      4      1 0.4928524
-#> 5      5      1 0.1184560
-#> 6      6      1 0.5492576
+#> 1      1      1 0.1859105
+#> 2      2      1 0.2811917
+#> 3      3      1 0.4659367
+#> 4      4      1 0.7903844
+#> 5      5      1 0.1858467
+#> 6      6      1 0.8630747
 ```
 
 We convert this into spatial lines as follows:
@@ -170,21 +170,27 @@ library(dplyr) # for data analysis
 #>     intersect, setdiff, setequal, union
 library(osmdata) # download data from OSM
 #> Data (c) OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright
+```
+
+``` r
+# run if online
 q = opq(bbox = c(-6.08, 37.32, -6.03, 37.38)) %>% 
   add_osm_feature(key = "railway", value = "station")
 stations = osmdata_sf(q)$osm_points
+saveRDS(stations, "data/stations.Rds")
 ```
 
 Official data on cycling is saved in the file `data/pop.geojson`, which can be loaded and visualised as follows:
 
 ``` r
+stations = readRDS("data/stations.Rds")
 pop = read_sf("data/pop.geojson")
 pop_cents = read_sf("data/pop_cents.geojson")
 qtm(pop, "pob_tot1") + 
   qtm(stations)
 ```
 
-![](figures/README-unnamed-chunk-12-1.png)
+![](figures/README-unnamed-chunk-13-1.png)
 
 The routes between each residential origin and its nearest station destination can be calculated as follows:
 
@@ -200,7 +206,7 @@ l = od2line(flow = od, zones = as(pop_cents, "Spatial"), destinations = as(stati
 qtm(l)
 ```
 
-![](figures/README-unnamed-chunk-13-1.png)
+![](figures/README-unnamed-chunk-14-1.png)
 
 These can be allocated to the transport network as follows:
 
@@ -220,7 +226,7 @@ qtm(routes, lines.lwd = "potential", scale = 10, lines.alpha = 0.5)
 #> Legend for line widths not available in view mode.
 ```
 
-![](figures/README-unnamed-chunk-14-1.png)
+![](figures/README-unnamed-chunk-15-1.png)
 
 The final stage is to aggregate the values of overlapping lines:
 
@@ -235,4 +241,4 @@ tm_shape(rnet) +
 #> Legend for line widths not available in view mode.
 ```
 
-![](figures/README-unnamed-chunk-15-1.png)
+![](figures/README-unnamed-chunk-16-1.png)
