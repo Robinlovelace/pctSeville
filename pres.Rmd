@@ -10,7 +10,6 @@ author:
 date: "`r Sys.Date()`"
 output:
   xaringan::moon_reader:
-    self_contained: true
     nature:
       highlightStyle: github
       highlightLines: true
@@ -21,7 +20,7 @@ output:
 
 - Work presented part of forthcoming paper (Marqués et al Under Review)
 
-![](figures/sev-cycle-paths.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/sev-cycle-paths.png)
 
 ---
 
@@ -53,25 +52,25 @@ output:
 
 - Public Transport and associated infrastructure have a range of impacts
 
-![](../pct/infra-active/active-travel-options.png)
+![](https://github.com/npct/pct/raw/master/infra-active/active-travel-options.png)
 
 ---
 
 # What is 'bike & ride'?
 
-![](figures/schematic-cyclin-pt-options.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/schematic-cyclin-pt-options.png)
 
 ---
 
 # Access to stations in Seville
 
-![](figures/fig6.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/fig6.png)
 
 ---
 
 # Bike & Ride catchment areas
 
-![](figures/fig7.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/fig7.png)
 
 # Data & Methods
 
@@ -118,7 +117,7 @@ Two main data sources that can be used to model OD-level travel in Seville: offi
 <!--   tm_shape(r) + tm_raster()) -->
 <!-- ``` -->
 
-<!-- ![](figures/README-unnamed-chunk-4-1.png) -->
+<!-- ![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-4-1.png) -->
 
 <!-- --- -->
 
@@ -131,7 +130,7 @@ Two main data sources that can be used to model OD-level travel in Seville: offi
 <!--   qtm(o) -->
 <!-- ``` -->
 
-<!-- ![](figures/README-unnamed-chunk-5-1.png) -->
+<!-- ![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-5-1.png) -->
 
 <!-- # Simulating (10) destinations  -->
 
@@ -139,7 +138,7 @@ Two main data sources that can be used to model OD-level travel in Seville: offi
 <!-- region_centre = rgeos::gCentroid(region_poly) -->
 <!-- ``` -->
 
-<!-- ![](figures/README-unnamed-chunk-6-1.png) -->
+<!-- ![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-6-1.png) -->
 
 <!-- --- -->
 
@@ -171,20 +170,20 @@ Two main data sources that can be used to model OD-level travel in Seville: offi
 
 <!-- On the map of Seville, and with width and opacity proportional to flow, this looks as follows: -->
 
-<!-- ![](figures/README-unnamed-chunk-9-1.png) -->
+<!-- ![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-9-1.png) -->
 
 <!-- --- -->
 
 <!-- Using real data -->
 <!-- --------------- -->
 
-<!-- ![](figures/README-unnamed-chunk-13-1.png) -->
+<!-- ![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-13-1.png) -->
 
 # Creation of 'flowlines'
 
 - Lines between residential origins and nearest station
 
-![](figures/README-unnamed-chunk-14-1.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-14-1.png)
 
 ---
 
@@ -196,7 +195,7 @@ These can be allocated to the transport network as follows:
 routes = stplanr::line2route(l = l, route_fun = route_graphhopper, vehicle = "bike")
 ```
 
-![](figures/README-unnamed-chunk-15-1.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-15-1.png)
 
 ---
 
@@ -208,7 +207,7 @@ The final stage is to aggregate the values of overlapping lines:
 rnet = overline(routes, "potential")
 ```
 
-![](figures/README-unnamed-chunk-16-1.png)
+![](https://github.com/Robinlovelace/pctSeville/raw/master/figures/README-unnamed-chunk-16-1.png)
 
 
 ---
