@@ -5,11 +5,12 @@ subtitle: "`r emojifont::emoji('bike')` `r emojifont::emoji('bus')` <br/>a case 
 author:
   - Robin Lovelace (University of Leeds)
   - Ricardo Marqués (Universidad de Sevilla)
+  - Manuel Calvo-Salazar (Independent consultant)
   - Javier Herrera-Sánchez (Independent consultant)
 date: "`r Sys.Date()`"
 output:
   xaringan::moon_reader:
-    lib_dir: libs
+    self_contained: true
     nature:
       highlightStyle: github
       highlightLines: true
@@ -18,11 +19,13 @@ output:
 
 # Context
 
+- Work presented part of forthcoming paper (Marqués et al Under Review)
+
 ![](figures/sev-cycle-paths.png)
 
 ---
 
-# Problems with current approach
+# Current approach
 
 - Focus on cycle paths around central area has a number of **negative** consequences (see below)
 
@@ -60,19 +63,17 @@ output:
 
 ---
 
-# Examples of 'bikelash'
+# Access to stations in Seville
 
-- Baltimore: legal proceeding to protect cycle path (source: [citylab](https://www.citylab.com/transportation/2017/07/baltimore-battles-its-bike-lanes/533424/))
-- Seattle: "war on cars" meme overcome by 'smart language'
-- Waltham Forest, London: bikelash against 'mini Holland' scheme tackled by broadening appeal of cycling advocacy groups
-
-![](http://s3.amazonaws.com/lcc_production_bucket/files/10016/in_content.PNG?1453218623)
-
-<!-- ![](https://cdn.theatlantic.com/assets/media/img/posts/2017/07/image/dcc5ab87f.png) -->
+![](figures/fig6.png)
 
 ---
 
-Methods
+# Bike & Ride catchment areas
+
+![](figures/fig7.png)
+
+# Data & Methods
 
 ---
 
@@ -106,168 +107,151 @@ Two main data sources that can be used to model OD-level travel in Seville: offi
 
 ---
 
-Study region
-------------
+<!-- Randomly generated data -->
+<!-- ----------------------- -->
 
-![](figures/README-unnamed-chunk-3-1.png)
+<!-- Let's split that region into 100 evenly sized areas, and give each cell a random value between 1 and 100: -->
 
----
+<!-- ``` r -->
+<!-- raster::values(r) = runif(n = 100, min = 0, max = 100) -->
+<!-- (m = qtm(region_poly) + -->
+<!--   tm_shape(r) + tm_raster()) -->
+<!-- ``` -->
 
-Randomly generated data
------------------------
+<!-- ![](figures/README-unnamed-chunk-4-1.png) -->
 
-Let's split that region into 100 evenly sized areas, and give each cell a random value between 1 and 100:
+<!-- --- -->
 
-``` r
-raster::values(r) = runif(n = 100, min = 0, max = 100)
-(m = qtm(region_poly) +
-  tm_shape(r) + tm_raster())
-```
-
-![](figures/README-unnamed-chunk-4-1.png)
-
----
-
-# Converting residential zones to 'centroid' points
+<!-- # Converting residential zones to 'centroid' points -->
 
 
-``` r
-o = as(r, "SpatialPointsDataFrame")
-m +
-  qtm(o)
-```
+<!-- ``` r -->
+<!-- o = as(r, "SpatialPointsDataFrame") -->
+<!-- m + -->
+<!--   qtm(o) -->
+<!-- ``` -->
 
-![](figures/README-unnamed-chunk-5-1.png)
+<!-- ![](figures/README-unnamed-chunk-5-1.png) -->
 
-# Simulating (10) destinations 
+<!-- # Simulating (10) destinations  -->
 
-``` r
-region_centre = rgeos::gCentroid(region_poly)
-```
+<!-- ``` r -->
+<!-- region_centre = rgeos::gCentroid(region_poly) -->
+<!-- ``` -->
 
-![](figures/README-unnamed-chunk-6-1.png)
+<!-- ![](figures/README-unnamed-chunk-6-1.png) -->
 
----
+<!-- --- -->
 
-# Estimating flow
+<!-- # Estimating flow -->
 
-We can estimate the 'flow' (T) between origins (`o`) and destinations (`d`) in many ways. The simplest is a simple gravity model, whereby, for each OD pair:
+<!-- We can estimate the 'flow' (T) between origins (`o`) and destinations (`d`) in many ways. The simplest is a simple gravity model, whereby, for each OD pair: -->
 
-$$
-T = \\frac{mn}{d^2}
-$$
- whereby m and n are some measure of size/attractiveness of `o` and `d` respectively. Implementing this in code, we can calculate all the flows as follows:
+<!-- $$ -->
+<!-- T = \\frac{mn}{d^2} -->
+<!-- $$ -->
+<!--  whereby m and n are some measure of size/attractiveness of `o` and `d` respectively. Implementing this in code, we can calculate all the flows as follows: -->
 
-``` r
-T_od = matrix(nrow = nrow(o), ncol = nrow(d))
-for(i in 1:nrow(o)) {
-  for(j in 1:nrow(d)) {
-    T_od[i, j] = o$layer[i] * d$w[j] / geosphere::distHaversine(o[i,], d[j,])
-  }
-}
-```
+<!-- ``` r -->
+<!-- T_od = matrix(nrow = nrow(o), ncol = nrow(d)) -->
+<!-- for(i in 1:nrow(o)) { -->
+<!--   for(j in 1:nrow(d)) { -->
+<!--     T_od[i, j] = o$layer[i] * d$w[j] / geosphere::distHaversine(o[i,], d[j,]) -->
+<!--   } -->
+<!-- } -->
+<!-- ``` -->
 
----
+<!-- --- -->
 
-# Conversion into spatial lines
+<!-- # Conversion into spatial lines -->
 
-``` r
-l = od2line(flow = T_odp, zones = o, destinations = d)
-```
+<!-- ``` r -->
+<!-- l = od2line(flow = T_odp, zones = o, destinations = d) -->
+<!-- ``` -->
 
-On the map of Seville, and with width and opacity proportional to flow, this looks as follows:
+<!-- On the map of Seville, and with width and opacity proportional to flow, this looks as follows: -->
 
-![](figures/README-unnamed-chunk-9-1.png)
+<!-- ![](figures/README-unnamed-chunk-9-1.png) -->
 
----
+<!-- --- -->
 
-Using real data
----------------
+<!-- Using real data -->
+<!-- --------------- -->
 
-From here we will use real data. We use only data on one area initially, and this is saved in the file `data/stations.geojson` ([the vignettes folder](https://github.com/Robinlovelace/pctSeville/blob/master/vignettes/sev-marques-data.Rmd) contains data to reproduce this data) which we load with help from the **sf** library:
+<!-- ![](figures/README-unnamed-chunk-13-1.png) -->
 
-``` r
-library(dplyr) # for data analysis
-#> 
-#> Attaching package: 'dplyr'
-#> The following objects are masked from 'package:stats':
-#> 
-#>     filter, lag
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
-library(osmdata) # download data from OSM
-#> Data (c) OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright
-```
+# Creation of 'flowlines'
 
-``` r
-# run if online
-q = opq(bbox = c(-6.08, 37.32, -6.03, 37.38)) %>% 
-  add_osm_feature(key = "railway", value = "station")
-stations = osmdata_sf(q)$osm_points
-saveRDS(stations, "data/stations.Rds")
-```
-
-Official data on cycling is saved in the file `data/pop.geojson`, which can be loaded and visualised as follows:
-
-``` r
-stations = readRDS("data/stations.Rds")
-pop = read_sf("data/pop.geojson")
-pop_cents = read_sf("data/pop_cents.geojson")
-qtm(pop, "pob_tot1") + 
-  qtm(stations)
-```
-
-![](figures/README-unnamed-chunk-13-1.png)
-
-The routes between each residential origin and its nearest station destination can be calculated as follows:
-
-``` r
-pop_cents = filter(pop_cents, pob_tot1 > 100)
-od = data.frame(origin = pop_cents$OBJECTID, destination = NA)
-for(i in 1:nrow(pop_cents)) {
-  for(j in 1:nrow(stations)) {
-    od$destination[i] = as.character(stations$osm_id[which.min(st_distance(stations, pop_cents[i,]))])
-  }
-}
-l = od2line(flow = od, zones = as(pop_cents, "Spatial"), destinations = as(stations, "Spatial"))
-qtm(l)
-```
+- Lines between residential origins and nearest station
 
 ![](figures/README-unnamed-chunk-14-1.png)
+
+---
+
+# Route allocation
 
 These can be allocated to the transport network as follows:
 
 ``` r
 routes = stplanr::line2route(l = l, route_fun = route_graphhopper, vehicle = "bike")
-#> 10 % out of 96 distances calculated
-#> 21 % out of 96 distances calculated
-#> 31 % out of 96 distances calculated
-#> 42 % out of 96 distances calculated
-#> 52 % out of 96 distances calculated
-#> 62 % out of 96 distances calculated
-#> 73 % out of 96 distances calculated
-#> 83 % out of 96 distances calculated
-#> 94 % out of 96 distances calculated
-routes$potential = pop_cents$pob_tot1 * 0.556
-qtm(routes, lines.lwd = "potential", scale = 10, lines.alpha = 0.5)
-#> Legend for line widths not available in view mode.
 ```
 
 ![](figures/README-unnamed-chunk-15-1.png)
+
+---
+
+# Route network generation
 
 The final stage is to aggregate the values of overlapping lines:
 
 ``` r
 rnet = overline(routes, "potential")
-tm_shape(pop) +
-  tm_fill(col = "pob_tot1", n = 4, breaks = c(0, 10, 100, 1000)) +
-tm_shape(rnet) +
-  tm_lines(lwd = "potential", scale = 20) +
-  qtm(stations) +
-  tm_scale_bar()
-#> Legend for line widths not available in view mode.
 ```
 
 ![](figures/README-unnamed-chunk-16-1.png)
 
+
+---
+
+# Estimates of Bike & Ride potential
+
+- Across Seville there is high potential for Bike & Ride
+- This would boost cycling in suburban areas
+- 13,000, 25,000 and 57,000 trips (short, medium and long term)
+- Results also tell us where the potential is highest:
+
+```{r, echo=FALSE, message=FALSE}
+library(tidyverse)
+readr::read_csv("data/results.csv") %>% 
+  slice(c(1:3, 9)) %>% 
+  knitr::kable(caption = "Bike & Ride potential for selected stations (trips/day): long, medium and short term.", format = "html")
+
+```
+
+---
+
+# Discussion
+
+- How to operationalise this research?
+- International scalability
+- Citizen health, congestion and air pollution estimates possible
+
+<!-- --- -->
+
+<!-- # Could it help mitigate 'bikelash' -->
+
+<!-- - Often caused by perception that cycling investment is not for everyone -->
+<!-- - Wealth people tend to live in city centres -->
+<!-- - Baltimore: legal proceeding to protect cycle path (source: [citylab](https://www.citylab.com/transportation/2017/07/baltimore-battles-its-bike-lanes/533424/)) -->
+<!-- - Seattle: "war on cars" meme overcome by 'smart language' -->
+<!-- - Waltham Forest, London: bikelash against 'mini Holland' scheme tackled by broadening appeal of cycling advocacy groups -->
+
+---
+
+# Questions and acknowledgements
+
+Thanks for listening
+
+<!-- ![](http://s3.amazonaws.com/lcc_production_bucket/files/10016/in_content.PNG?1453218623) -->
+
+<!-- ![](https://cdn.theatlantic.com/assets/media/img/posts/2017/07/image/dcc5ab87f.png) -->
